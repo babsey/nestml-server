@@ -14,7 +14,7 @@ make -j $(nproc)
 make install
 ```
 
-### Singularity
+#### Singularity
 
 Use singularity or install all requirements in host.
 
