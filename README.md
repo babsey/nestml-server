@@ -14,6 +14,8 @@ make -j $(nproc)
 make install
 ```
 
+### Singularity
+
 Use singularity or install all requirements in host.
 
 Build Singularity images with all requirements for NESTML and server
