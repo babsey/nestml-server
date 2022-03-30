@@ -1,0 +1,13 @@
+antlr4-python3-runtime >= 4.7
+astropy
+Flask
+Flask-Cors
+gunicorn
+Jinja2 >= 2.10
+jupyterlab
+numpy >= 1.8.2
+odetoolbox >= 2.4
+requests
+setuptools
+sympy >= 1.1.1
+typing;python_version<"3.5"
