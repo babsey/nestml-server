@@ -14,6 +14,7 @@ make -j $(nproc)
 make install
 ```
 
+
 #### Singularity
 
 Use singularity or install all requirements in host.
@@ -31,17 +32,22 @@ singularity shell nestml-server.sif
 
 ### Usage
 
-##### Start NESTML Server
+Source config variables of NEST to load path and pythonpath.
+```
+source $HOME/opt/nest-nestml/bin/nest_vars.sh
+```
+
+##### A. Start NESTML Server
 
 ```
 gunicorn nestml_server:app --bind 0.0.0.0:5005 --timeout 120
 ```
 
-##### Start Jupyter notebook
+##### B. Start Jupyter notebook
 
 User can send code to NESTML server to build and install NESTML models.
 
 ```
-cd examples/notebook
+cd notebook
 jupyter notebook
 ```
