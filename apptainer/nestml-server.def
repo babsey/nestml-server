@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: ubuntu:20.04
+From: ubuntu:22.04
 
 %labels
   AUTHOR Sebastian Spreizer <spreizer@web.de>
@@ -18,4 +18,4 @@ From: ubuntu:20.04
     python3-pip
 
   python3 -m pip install -r requirements.txt
-  python3 -m pip install nestml --pre
+  python3 -m pip install nestml
