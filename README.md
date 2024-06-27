@@ -14,25 +14,26 @@ make -j $(nproc)
 make install
 ```
 
-
 #### Singularity
 
 Use singularity or install all requirements in host.
 
 Build Singularity images with all requirements for NESTML and server
+
 ```
 sudo singularity build nestml-server.sif singularity/nest-server.def
 ```
 
 Use Singularity for NESTML Server and Jupyter notebook
+
 ```
 singularity shell nestml-server.sif
 ```
 
-
 ### Usage
 
 Source config variables of NEST to load path and pythonpath.
+
 ```
 source $HOME/opt/nest-nestml/bin/nest_vars.sh
 ```
@@ -40,7 +41,7 @@ source $HOME/opt/nest-nestml/bin/nest_vars.sh
 ##### A. Start NESTML Server
 
 ```
-gunicorn nestml_server:app --bind 0.0.0.0:5005 --timeout 120
+gunicorn nestml_server:app --bind 0.0.0.0:52426 --timeout 120
 ```
 
 ##### B. Start Jupyter notebook
