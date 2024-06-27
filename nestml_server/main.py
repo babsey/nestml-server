@@ -5,7 +5,7 @@ import sys
 import shutil
 
 from flask import abort, Flask, jsonify, request
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 
 from werkzeug.exceptions import abort
 from werkzeug.wrappers import Response
@@ -13,21 +13,23 @@ import traceback
 
 import nest
 import pynestml
-from pynestml.frontend.pynestml_frontend import to_nest, install_nest
 
-HOST = os.environ.get('NESTML_SERVER_HOST', '127.0.0.1')
-PORT = os.environ.get('NESTML_SERVER_PORT', '5005')
+from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_target
+from pynestml.utils.model_parser import ModelParser
 
-BUILD = os.environ.get('NESTML_BUILD_PATH', '/tmp/nestml_build')
-MODELS = os.environ.get('NESTML_MODELS_PATH', '/tmp/nestml_models')
-NEST = os.environ.get('NESTML_NEST_PATH', '/home/spreizer/opt/nest-nestml')
+
+HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
+PORT = os.environ.get("NESTML_SERVER_PORT", "52426")
+
+MODELS_PATH = os.environ.get("NESTML_MODELS_PATH", "/tmp/nestml_models")
+TARGETS_PATH = os.environ.get("NESTML_TARGETS_PATH", "/tmp/nestml_targets")
+for path in [MODELS_PATH, TARGETS_PATH]:
+    os.makedirs(path, exist_ok=True)
 
 EXCEPTION_ERROR_STATUS = 400
 
 
-__all__ = [
-    'app'
-]
+__all__ = ["app"]
 
 app = Flask(__name__)
 CORS(app)
@@ -36,18 +38,28 @@ CORS(app)
 # Routes for the server
 # ----------------------
 
-@app.route('/', methods=['GET'])
-def index():
-    return jsonify({
-        'nest': nest.__version__,
-        'nestml': pynestml.__version__,
-    })
 
-@app.route('/install', methods=['POST'])
-@cross_origin()
-def install():
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify(
+        {
+            "nest": nest.__version__,
+            "nestml": pynestml.__version__,
+        }
+    )
+
+
+@app.route("/generate", methods=["POST"])
+def generate():
     data = request.get_json()
-    response = do_install(data)
+    response = do_generate(data)
+    return jsonify(response)
+
+
+@app.route("/getParams", methods=["POST"])
+def parse_json():
+    data = request.get_json()
+    response = do_get_params(data)
     return jsonify(response)
 
 
@@ -55,9 +67,10 @@ def install():
 # Helpers for the server
 # ----------------------
 
+
 def get_or_error(func):
-    """ Wrapper to get data and status.
-    """
+    """Wrapper to get data and status."""
+
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -65,73 +78,125 @@ def get_or_error(func):
             for line in traceback.format_exception(*sys.exc_info()):
                 print(line, flush=True)
             abort(Response(str(e), EXCEPTION_ERROR_STATUS))
+
     return func_wrapper
 
-def clear_folder(folder):
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
+
+def clear_dir(path):
+    for filename in os.listdir(path):
+        file_path = os.path.join(path, filename)
         try:
             if os.path.isfile(file_path) or os.path.islink(file_path):
                 os.unlink(file_path)
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
+            print("Failed to delete %s. Reason: %s" % (file_path, e))
+
 
 # ----------------------
 # Executions for the server
 # ----------------------
 
+
 @get_or_error
-def do_install(data):
-    """ Install nestml models.
-    """
-    models = data.get('models', [])
-    status = {'INITIALIZED': [], 'WRITTEN': [], 'BUILT': [], 'INSTALLED':[]}
+def do_generate(data):
+    """Install nestml models."""
+    module_name = data.get("module_name", "nestmlmodule")
+    models = data.get("models", [])
+    status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
 
-    # Remove all nestml model files.
-    clear_folder(MODELS)
+    if len(models) > 0:
+        print(MODELS_PATH, module_name)
+        models_path = os.path.join(MODELS_PATH, module_name)
+        targets_path = os.path.join(TARGETS_PATH, module_name)
 
-    # Write nestml models in files.
-    for model in models:
-        model_name = model['name']
-        status['INITIALIZED'].append(model_name)
-        model_script = model['script']
-        filename = os.path.join(MODELS, model_name)
-        with open(filename + '.nestml', 'w') as f:
-            f.write(model_script)
+        for path in [models_path, targets_path]:
+            os.makedirs(path, exist_ok=True)
+            clear_dir(path)
 
-    # Check if models are built.
-    for file in os.listdir(MODELS):
-        if file.endswith('.nestml'):
-            model_name, _ = file.split('.')
-            status['WRITTEN'].append(model_name)
+        # Write nestml models in files.
+        for model in models:
+            model_name = model["name"]
+            model_script = model["script"]
+            status["INITIALIZED"].append(model_name)
 
-    # Remove all build files.
-    clear_folder(BUILD)
+            filename = os.path.join(models_path, model_name)
+            with open(filename + ".nestml", "w") as f:
+                f.write(model_script)
 
-    # Build nestml models.
-    module_name = data.get('module_name', 'nestmlmodule')
-    to_nest(MODELS, BUILD, module_name=module_name)
+        # print(status["INITIALIZED"])
 
-    # Check if models are built.
-    for file in os.listdir(BUILD):
-        if file.endswith('.cpp'):
-            model_name, _ = file.split('.')
-            status['BUILT'].append(model_name)
+        # Check if models are built.
+        for file in os.listdir(MODELS_PATH):
+            if file.endswith(".nestml"):
+                model_name, _ = file.split(".")
+                status["WRITTEN"].append(model_name)
 
-    # Install nestml models.
-    install_nest(BUILD, NEST)
+        # print(status["WRITTEN"])
 
-    # Check if models are installed in NEST.
-    # nest.ResetKernel()
-    # nest.Install(module_name)
-    # kernel_status = nest.GetKernelStatus()
-    # for model in status.keys():
-    #     if model in kernel_status['node_models'] or model in kernel_status['synapse_models']:
-    #         status['INSTALLED'].append(model_name)
+        # Generate nestml model components.
+        generate_nest_target(input_path=models_path, target_path=targets_path, module_name=module_name)
 
-    return {'status': status}
+        # Check if models are generated.
+        for file in os.listdir(targets_path):
+            if file.endswith(".cpp"):
+                model_name, _ = file.split(".")
+                status["BUILT"].append(model_name)
+
+        # print(status["BUILT"])
+
+        # Check if models are installed in NEST.
+        nest.ResetKernel()
+        nest.Install(module_name)
+        kernel_status = nest.GetKernelStatus()
+        for model in status["BUILT"]:
+            if model in kernel_status["node_models"] or model in kernel_status["synapse_models"]:
+                status["INSTALLED"].append(model)
+
+        # print(status["INSTALLED"])
+
+    return {"status": status}
+
+
+@get_or_error
+def do_get_params(data):
+    init_predefined()
+
+    element_type = data["element_type"]
+    if element_type == "neuron":
+        model_parsed = ModelParser.parse_neuron(data["script"])
+    elif element_type == "synapse":
+        model_parsed = ModelParser.parse_synapse(data["script"])
+
+    params = {}
+    if model_parsed:
+        model_parameters_declarations = model_parsed.get_parameters_blocks()[0].declarations
+        for model_parameters_declaration in model_parameters_declarations:
+            param = {}
+
+            try:
+                param["label"] = model_parameters_declaration.comment[0][1:]
+            except:
+                pass
+
+            try:
+                param["value"] = model_parameters_declaration.expression.numeric_literal
+            except:
+                pass
+
+            try:
+                param["value"] = -model_parameters_declaration.expression.expression.numeric_literal
+            except:
+                pass
+
+            if model_parameters_declaration.data_type.is_unit_type():
+                param["unit"] = model_parameters_declaration.data_type.unit_type.unit
+
+            paramId = model_parameters_declaration.variables[0].name
+            params[paramId] = param
+
+    return {"params": params}
 
 
 if __name__ == "__main__":
