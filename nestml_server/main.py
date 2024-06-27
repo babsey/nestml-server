@@ -49,7 +49,7 @@ def index():
     )
 
 
-@app.route("/generate", methods=["POST"])
+@app.route("/generateModels", methods=["POST"])
 def generate():
     data = request.get_json()
     response = do_generate(data)
@@ -107,7 +107,6 @@ def do_generate(data):
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
 
     if len(models) > 0:
-        print(MODELS_PATH, module_name)
         models_path = os.path.join(MODELS_PATH, module_name)
         targets_path = os.path.join(TARGETS_PATH, module_name)
 
