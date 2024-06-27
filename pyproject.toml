@@ -6,14 +6,14 @@ authors = [
   {name = "Sebastian Spreizer", email = "spreizer@web.de"},
 ]
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 # keywords = ["spiking neuronal networks", "simulation", "NEST", "model generation", custom model"]
 classifiers = [
   # How mature is this project? Common values are
   #   3 - Alpha
   #   4 - Beta
   #   5 - Production/Stable
-  "Development Status :: 2 - Beta",
+  "Development Status :: 4 - Beta",
 
   # Indicate who your project is intended for
   "Intended Audience :: End Users/Desktop",
@@ -27,16 +27,22 @@ classifiers = [
   # Specify the Python versions you support here.
   "Programming Language :: Python :: 3",
 ]
-dependencies = []
+dependencies = [
+    "requests",
+    "flask",
+    "flask-cors",
+    "werkzeug",
+    "gunicorn"
+]
 dynamic = ["version"]
 
-# [project.urls]
-# repository = "https://github.com/nest-desktop/nest-desktop"
-# documentation = "https://nest-desktop.readthedocs.io"
+[project.urls]
+repository = "https://github.com/babsey/nestml-server"
+documentation = "https://nestml.readthedocs.io"
 
 [tool.setuptools]
-package-dir = {"nestml_server" = "nestml_server"}
+package-dir = {"nestml_server" = "src"}
 script-files = ["scripts/nestml-server"]
 
 [tool.setuptools.dynamic]
-version = {attr = "nestml_server.__version__"}
+version = {attr = "src.__version__"}

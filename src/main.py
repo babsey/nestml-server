@@ -52,7 +52,7 @@ def index():
 @app.route("/generateModels", methods=["POST"])
 def generate():
     data = request.get_json()
-    response = do_generate(data)
+    response = do_generate_models(data)
     return jsonify(response)
 
 
@@ -100,8 +100,8 @@ def clear_dir(path):
 
 
 @get_or_error
-def do_generate(data):
-    """Install nestml models."""
+def do_generate_models(data):
+    """Generate nestml models."""
     module_name = data.get("module_name", "nestmlmodule")
     models = data.get("models", [])
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
