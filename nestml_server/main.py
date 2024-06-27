@@ -159,15 +159,19 @@ def do_generate(data):
     return {"status": status}
 
 
+def try_or_pass(dict, key, value):
+    try:
+        dict[key] = value()
+    except:
+        pass
+
+
 @get_or_error
 def do_get_params(data):
     init_predefined()
 
-    element_type = data["element_type"]
-    if element_type == "neuron":
-        model_parsed = ModelParser.parse_neuron(data["script"])
-    elif element_type == "synapse":
-        model_parsed = ModelParser.parse_synapse(data["script"])
+    element_type = data.get("element_type", "neuron")
+    model_parsed = getattr(ModelParser, "parse_" + element_type)(data["script"])
 
     params = {}
     if model_parsed:
@@ -175,20 +179,9 @@ def do_get_params(data):
         for model_parameters_declaration in model_parameters_declarations:
             param = {}
 
-            try:
-                param["label"] = model_parameters_declaration.comment[0][1:]
-            except:
-                pass
-
-            try:
-                param["value"] = model_parameters_declaration.expression.numeric_literal
-            except:
-                pass
-
-            try:
-                param["value"] = -model_parameters_declaration.expression.expression.numeric_literal
-            except:
-                pass
+            try_or_pass(param, "label", lambda: model_parameters_declaration.comment[0][1:])
+            try_or_pass(param, "value", lambda: model_parameters_declaration.expression.numeric_literal)
+            try_or_pass(param, "value", lambda: model_parameters_declaration.expression.expression.numeric_literal)
 
             if model_parameters_declaration.data_type.is_unit_type():
                 param["unit"] = model_parameters_declaration.data_type.unit_type.unit
