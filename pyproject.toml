@@ -28,11 +28,10 @@ classifiers = [
   "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "requests",
-    "flask",
-    "flask-cors",
-    "werkzeug",
-    "gunicorn"
+  "flask",
+  "flask-cors",
+  "gunicorn",
+  "nestml>=7.0",
 ]
 dynamic = ["version"]
 
