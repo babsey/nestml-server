@@ -50,14 +50,14 @@ def index():
 
 
 @app.route("/generateModels", methods=["POST"])
-def generate():
+def generate_models():
     data = request.get_json()
     response = do_generate_models(data)
     return jsonify(response)
 
 
 @app.route("/getParams", methods=["POST"])
-def parse_json():
+def get_params():
     data = request.get_json()
     response = do_get_params(data)
     return jsonify(response)
@@ -94,15 +94,25 @@ def clear_dir(path):
             print("Failed to delete %s. Reason: %s" % (file_path, e))
 
 
-# ----------------------
+def try_or_pass(dict, key, value):
+    try:
+        dict[key] = value()
+    except:
+        pass
+
+
+# -------------------------
 # Executions for the server
-# ----------------------
+# -------------------------
 
 
 @get_or_error
 def do_generate_models(data):
     """Generate nestml models."""
     module_name = data.get("module_name", "nestmlmodule")
+    if type(module_name) == list:
+        module_name = module_name[0]
+
     models = data.get("models", [])
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
 
@@ -156,13 +166,6 @@ def do_generate_models(data):
         # print(status["INSTALLED"])
 
     return {"status": status}
-
-
-def try_or_pass(dict, key, value):
-    try:
-        dict[key] = value()
-    except:
-        pass
 
 
 @get_or_error
