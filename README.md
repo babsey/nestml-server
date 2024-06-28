@@ -2,53 +2,43 @@
 
 ### Install
 
-Install NEST Simulator into home folder because of non-root permission
-to write files into nest install directory.
+Install NESTML and its server instance.
 
 ```
-wget https://github.com/nest/nest-simulator/archive/refs/heads/master.zip -O /tmp/nest-simulator-master.zip
-unzip /tmp/nest-simulator-master.zip -d /tmp/
-rm -rf /tmp/nest-build/; mkdir -p /tmp/nest-build; cd /tmp/nest-build
-cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/opt/nest-nestml /tmp/nest-simulator-master
-make -j $(nproc)
-make install
+pip install nestml nestml-server
 ```
 
-#### Singularity
-
-Use singularity or install all requirements in host.
-
-Build Singularity images with all requirements for NESTML and server
-
-```
-sudo singularity build nestml-server.sif singularity/nest-server.def
-```
-
-Use Singularity for NESTML Server and Jupyter notebook
-
-```
-singularity shell nestml-server.sif
-```
+Note: NESTML requires NEST Simulator (>= 3.0).
+To install it `conda install nest-simulator`.
 
 ### Usage
 
-Source config variables of NEST to load path and pythonpath.
+Start NESTML Server
 
 ```
-source $HOME/opt/nest-nestml/bin/nest_vars.sh
+nestml-server start
 ```
 
-##### A. Start NESTML Server
+### Options
+
+Check options in nestml-server command:
 
 ```
-gunicorn nestml_server:app --bind 0.0.0.0:52426 --timeout 120
+nestml-server
 ```
 
-##### B. Start Jupyter notebook
+### Environment variables
 
-User can send code to NESTML server to build and install NESTML models.
+Define HOST and/or PORT:
 
 ```
-cd notebook
-jupyter notebook
+export NESTML_SERVER_HOST=http://localhost
+export NESTML_SERVER_PORT=52426
+```
+
+Define path for models and/or targets:
+
+```
+export NESTML_MODELS=/tmp/nestml_models
+export NESTML_TARGETS=/tmp/nestml_targets
 ```
