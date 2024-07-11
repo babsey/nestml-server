@@ -63,6 +63,27 @@ def get_params():
     return jsonify(response)
 
 
+@app.route("/models", methods=["GET", "POST"])
+def get_models():
+    if request.is_json:
+        data = request.get_json()
+        module = data.get("module", "nestmlmodule")
+    else:
+        module = "nestmlmodule"
+
+    filenames = os.listdir(os.path.join(TARGETS_PATH, module))
+    models = filter(lambda filename: (not filename.startswith(module) and filename.endswith(".cpp")), filenames)
+    models = map(lambda model: model.split(".")[0], models)
+    return jsonify(list(models))
+
+
+@app.route("/modules", methods=["GET"])
+def get_modules():
+    filenames = os.listdir(TARGETS_PATH)
+    modules = filter(lambda filename: filename.endswith("module"), filenames)
+    return jsonify(list(modules))
+
+
 # ----------------------
 # Helpers for the server
 # ----------------------
@@ -175,21 +196,23 @@ def do_get_params(data):
     element_type = data.get("element_type", "neuron")
     model_parsed = getattr(ModelParser, "parse_" + element_type)(data["script"])
 
-    params = {}
+    params = []
     if model_parsed:
         model_parameters_declarations = model_parsed.get_parameters_blocks()[0].declarations
         for model_parameters_declaration in model_parameters_declarations:
-            param = {}
+            param = []
 
+            try_or_pass(param, "id", lambda: model_parameters_declaration.variables[0].name)
             try_or_pass(param, "label", lambda: model_parameters_declaration.comment[0][1:])
+
+            # Get values.
             try_or_pass(param, "value", lambda: model_parameters_declaration.expression.numeric_literal)
             try_or_pass(param, "value", lambda: model_parameters_declaration.expression.expression.numeric_literal)
 
             if model_parameters_declaration.data_type.is_unit_type():
-                param["unit"] = model_parameters_declaration.data_type.unit_type.unit
+                try_or_pass(param, "unit", lambda: model_parameters_declaration.data_type.unit_type.unit)
 
-            paramId = model_parameters_declaration.variables[0].name
-            params[paramId] = param
+            params.push(param)
 
     return {"params": params}
 
