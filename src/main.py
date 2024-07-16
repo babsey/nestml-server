@@ -17,6 +17,7 @@ import pynestml
 from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_target
 from pynestml.utils.model_parser import ModelParser
 
+NESTML_MAJOR_RELEASE = int(pynestml.__version__.split(".")[0])
 
 HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
 PORT = os.environ.get("NESTML_SERVER_PORT", "52426")
@@ -41,12 +42,7 @@ CORS(app)
 
 @app.route("/", methods=["GET"])
 def index():
-    return jsonify(
-        {
-            "nest": nest.__version__,
-            "nestml": pynestml.__version__,
-        }
-    )
+    return jsonify({"nest": nest.__version__, "nestml": pynestml.__version__})
 
 
 @app.route("/generateModels", methods=["POST"])
@@ -199,8 +195,11 @@ def do_generate_models(data):
 def do_get_params(data):
     init_predefined()
 
-    element_type = data.get("element_type", "neuron")
-    model = getattr(ModelParser, "parse_" + element_type)(data["script"])
+    if NESTML_MAJOR_RELEASE >= 8:
+        model = ModelParser.parse_model(data["script"])
+    else:
+        element_type = data.get("element_type", "neuron")
+        model = getattr(ModelParser, "parse_" + element_type)(data["script"])
 
     params = []
     if model:
