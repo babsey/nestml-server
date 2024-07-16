@@ -1,4 +1,4 @@
 flask
 flask-cors
 gunicorn
-nestml >= 7.0
+nestml>=7.0
