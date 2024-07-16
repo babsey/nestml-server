@@ -5,7 +5,9 @@
 Install NESTML and its server instance.
 
 ```
-pip install nestml nestml-server
+pip install nestml
+pip install git+https://github.com/babsey/nestml-server
+
 ```
 
 Note: NESTML requires NEST Simulator (>= 3.0).
