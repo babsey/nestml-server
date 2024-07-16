@@ -200,7 +200,7 @@ def do_get_params(data):
     if model_parsed:
         model_parameters_declarations = model_parsed.get_parameters_blocks()[0].declarations
         for model_parameters_declaration in model_parameters_declarations:
-            param = []
+            param = {}
 
             try_or_pass(param, "id", lambda: model_parameters_declaration.variables[0].name)
             try_or_pass(param, "label", lambda: model_parameters_declaration.comment[0][1:])
@@ -212,7 +212,7 @@ def do_get_params(data):
             if model_parameters_declaration.data_type.is_unit_type():
                 try_or_pass(param, "unit", lambda: model_parameters_declaration.data_type.unit_type.unit)
 
-            params.push(param)
+            params.append(param)
 
     return {"params": params}
 
