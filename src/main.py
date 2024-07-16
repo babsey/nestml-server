@@ -89,18 +89,10 @@ def get_modules():
 # ----------------------
 
 
-def get_or_error(func):
-    """Wrapper to get data and status."""
-
-    def func_wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            for line in traceback.format_exception(*sys.exc_info()):
-                print(line, flush=True)
-            abort(Response(str(e), EXCEPTION_ERROR_STATUS))
-
-    return func_wrapper
+def clean_param(param):
+    keys = [k for k, v in param.items() if v == None]
+    for key in keys:
+        del param[key]
 
 
 def clear_dir(path):
@@ -115,9 +107,23 @@ def clear_dir(path):
             print("Failed to delete %s. Reason: %s" % (file_path, e))
 
 
-def try_or_pass(dict, key, value):
+def get_or_error(func):
+    """Wrapper to get data and status."""
+
+    def func_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            for line in traceback.format_exception(*sys.exc_info()):
+                print(line, flush=True)
+            abort(Response(str(e), EXCEPTION_ERROR_STATUS))
+
+    return func_wrapper
+
+
+def try_or_pass(value):
     try:
-        dict[key] = value()
+        return value()
     except:
         pass
 
@@ -194,24 +200,30 @@ def do_get_params(data):
     init_predefined()
 
     element_type = data.get("element_type", "neuron")
-    model_parsed = getattr(ModelParser, "parse_" + element_type)(data["script"])
+    model = getattr(ModelParser, "parse_" + element_type)(data["script"])
 
     params = []
-    if model_parsed:
-        model_parameters_declarations = model_parsed.get_parameters_blocks()[0].declarations
-        for model_parameters_declaration in model_parameters_declarations:
+    if model:
+        declarations = model.get_parameters_blocks()[0].declarations
+        for declaration in declarations:
             param = {}
 
-            try_or_pass(param, "id", lambda: model_parameters_declaration.variables[0].name)
-            try_or_pass(param, "label", lambda: model_parameters_declaration.comment[0][1:])
+            param["id"] = try_or_pass(lambda: declaration.variables[0].name)
+            param["label"] = try_or_pass(lambda: declaration.print_comment()[2:])
 
-            # Get values.
-            try_or_pass(param, "value", lambda: model_parameters_declaration.expression.numeric_literal)
-            try_or_pass(param, "value", lambda: model_parameters_declaration.expression.expression.numeric_literal)
+            expression = declaration.expression
+            value = 1
 
-            if model_parameters_declaration.data_type.is_unit_type():
-                try_or_pass(param, "unit", lambda: model_parameters_declaration.data_type.unit_type.unit)
+            if expression.__str__().startswith("-"):
+                expression = expression.expression
+                value = -1
 
+            param["value"] = value * try_or_pass(lambda: expression.numeric_literal)
+
+            if expression.has_unit():
+                param["unit"] = try_or_pass(lambda: expression.get_units()[0].name)
+
+            clean_param(param)
             params.append(param)
 
     return {"params": params}
