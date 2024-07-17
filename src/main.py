@@ -57,19 +57,32 @@ def get_params():
     return jsonify(response)
 
 
-@app.route("/models", methods=["GET", "POST"])
-def get_models():
-    if request.is_json:
-        data = request.get_json()
-        module = data.get("module", "nestmlmodule")
-        models = do_get_models(module)
-    else:
-        modules = do_get_modules()
-        models = {}
-        for module in modules:
-            models[module] = do_get_models(module)
+@app.route("/models", methods=["GET"])
+def get_all_models():
+    modules = do_get_modules()
+    models = {}
+    for module in modules:
+        models[module] = do_get_models(module)
 
     return jsonify(models)
+
+
+@app.route("/module/<module>/installed", methods=["GET"])
+def get_installed(module):
+    models = do_get_installed(module)
+    return jsonify(models)
+
+
+@app.route("/module/<module>/models", methods=["GET"])
+def get_models(module):
+    models = do_get_models(module)
+    return jsonify(models)
+
+
+@app.route("/module/<module>/model/<model_name>", methods=["GET"])
+def get_model(module, model_name):
+    model_script = do_get_model_script(module, model_name)
+    return jsonify({"script": model_script})
 
 
 @app.route("/modules", methods=["GET"])
@@ -203,11 +216,27 @@ def do_generate_models(data):
 
 
 @get_or_error
-def do_get_models(module_name):
-    filenames = os.listdir(get_models_path(module_name))
+def do_get_installed(module_name):
+    filenames = os.listdir(get_module_path(module_name))
     models = filter(lambda filename: (not filename.startswith(module_name) and filename.endswith(".cpp")), filenames)
     models = map(lambda model: model.split(".")[0], models)
     return list(models)
+
+
+@get_or_error
+def do_get_models(module_name):
+    filenames = os.listdir(get_models_path(module_name))
+    models = filter(lambda filename: filename.endswith(".nestml"), filenames)
+    models = map(lambda model: model.split(".")[0], models)
+    return list(models)
+
+
+@get_or_error
+def do_get_model_script(module_name, model_name):
+    filename = os.path.join(get_models_path(module_name), model_name)
+    with open(filename + ".nestml", "r") as f:
+        script = f.read()
+    return script
 
 
 @get_or_error
