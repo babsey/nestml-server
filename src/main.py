@@ -23,8 +23,8 @@ HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
 PORT = os.environ.get("NESTML_SERVER_PORT", "52426")
 
 MODELS_PATH = os.environ.get("NESTML_MODELS_PATH", "/tmp/nestml_models")
-TARGETS_PATH = os.environ.get("NESTML_TARGETS_PATH", "/tmp/nestml_targets")
-for path in [MODELS_PATH, TARGETS_PATH]:
+MODULES_PATH = os.environ.get("NESTML_TARGETS_PATH", "/tmp/nestmlmodules")
+for path in [MODELS_PATH, MODULES_PATH]:
     os.makedirs(path, exist_ok=True)
 
 EXCEPTION_ERROR_STATUS = 400
@@ -140,10 +140,11 @@ def do_generate_models(data):
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
 
     if len(models) > 0:
-        models_path = os.path.join(MODELS_PATH, module_name)
-        targets_path = os.path.join(TARGETS_PATH, module_name)
+        input_path = os.path.join(MODELS_PATH, module_name)
+        install_path = MODULES_PATH
+        target_path = os.path.join(MODULES_PATH, module_name)
 
-        for path in [models_path, targets_path]:
+        for path in [input_path, target_path]:
             os.makedirs(path, exist_ok=True)
             clear_dir(path)
 
@@ -153,7 +154,7 @@ def do_generate_models(data):
             model_script = model["script"]
             status["INITIALIZED"].append(model_name)
 
-            filename = os.path.join(models_path, model_name)
+            filename = os.path.join(input_path, model_name)
             with open(filename + ".nestml", "w") as f:
                 f.write(model_script)
 
@@ -167,11 +168,16 @@ def do_generate_models(data):
 
         # print(status["WRITTEN"])
 
-        # Generate nestml model components.
-        generate_nest_target(input_path=models_path, target_path=targets_path, module_name=module_name)
+        # Generate nest model components in a nestml module.
+        generate_nest_target(
+            input_path=input_path,
+            install_path=install_path,
+            module_name=module_name,
+            target_path=target_path,
+        )
 
         # Check if models are generated.
-        for file in os.listdir(targets_path):
+        for file in os.listdir(target_path):
             if file.endswith(".cpp"):
                 model_name, _ = file.split(".")
                 status["BUILT"].append(model_name)
