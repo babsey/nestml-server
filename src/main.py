@@ -17,15 +17,13 @@ import pynestml
 from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_target
 from pynestml.utils.model_parser import ModelParser
 
-NESTML_MAJOR_RELEASE = int(pynestml.__version__.split(".")[0])
+MAJOR_VERSION = int(pynestml.__version__.split(".")[0])
 
 HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
 PORT = os.environ.get("NESTML_SERVER_PORT", "52426")
 
-MODELS_PATH = os.environ.get("NESTML_MODELS_PATH", "/tmp/nestmlmodels")
 MODULES_PATH = os.environ.get("NESTML_MODULES_PATH", "/tmp/nestmlmodules")
-for path in [MODELS_PATH, MODULES_PATH]:
-    os.makedirs(path, exist_ok=True)
+os.makedirs(MODULES_PATH, exist_ok=True)
 
 EXCEPTION_ERROR_STATUS = 400
 
@@ -64,21 +62,20 @@ def get_models():
     if request.is_json:
         data = request.get_json()
         module = data.get("module", "nestmlmodule")
+        models = do_get_models(module)
     else:
-        module = "nestmlmodule"
+        modules = do_get_modules()
+        models = {}
+        for module in modules:
+            models[module] = do_get_models(module)
 
-    filenames = os.listdir(os.path.join(MODULES_PATH, module))
-    models = filter(lambda filename: (not filename.startswith(module) and filename.endswith(".cpp")), filenames)
-    models = map(lambda model: model.split(".")[0], models)
-    return jsonify(list(models))
+    return jsonify(models)
 
 
 @app.route("/modules", methods=["GET"])
 def get_modules():
-    filenames = os.listdir(MODULES_PATH)
-    modules = filter(lambda filename: filename.endswith(".so"), filenames)
-    modules = map(lambda filename: filename.split(".")[0], modules)
-    return jsonify(list(modules))
+    modules = do_get_modules()
+    return jsonify(modules)
 
 
 # ----------------------
@@ -104,6 +101,10 @@ def clear_dir(path):
             print("Failed to delete %s. Reason: %s" % (file_path, e))
 
 
+def get_models_path(module_name):
+    return os.path.join(MODULES_PATH, module_name, "models")
+
+
 def get_or_error(func):
     """Wrapper to get data and status."""
 
@@ -116,6 +117,10 @@ def get_or_error(func):
             abort(Response(str(e), EXCEPTION_ERROR_STATUS))
 
     return func_wrapper
+
+
+def get_module_path(module_name):
+    return os.path.join(MODULES_PATH, module_name, "module")
 
 
 def try_or_pass(value):
@@ -141,11 +146,10 @@ def do_generate_models(data):
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
 
     if len(models) > 0:
-        input_path = os.path.join(MODELS_PATH, module_name)
-        install_path = MODULES_PATH
-        target_path = os.path.join(MODULES_PATH, module_name)
+        models_path = get_models_path(module_name)
+        module_path = get_module_path(module_name)
 
-        for path in [input_path, target_path]:
+        for path in [models_path, module_path]:
             os.makedirs(path, exist_ok=True)
             clear_dir(path)
 
@@ -155,14 +159,14 @@ def do_generate_models(data):
             model_script = model["script"]
             status["INITIALIZED"].append(model_name)
 
-            filename = os.path.join(input_path, model_name)
+            filename = os.path.join(models_path, model_name)
             with open(filename + ".nestml", "w") as f:
                 f.write(model_script)
 
         # print(status["INITIALIZED"])
 
         # Check if models are built.
-        for file in os.listdir(MODELS_PATH):
+        for file in os.listdir(models_path):
             if file.endswith(".nestml"):
                 model_name, _ = file.split(".")
                 status["WRITTEN"].append(model_name)
@@ -171,14 +175,14 @@ def do_generate_models(data):
 
         # Generate nest model components in a nestml module.
         generate_nest_target(
-            input_path=input_path,
-            install_path=install_path,
+            input_path=models_path,
+            install_path=MODULES_PATH,
             module_name=module_name,
-            target_path=target_path,
+            target_path=module_path,
         )
 
         # Check if models are generated.
-        for file in os.listdir(target_path):
+        for file in os.listdir(module_path):
             if file.endswith(".cpp"):
                 model_name, _ = file.split(".")
                 status["BUILT"].append(model_name)
@@ -199,10 +203,26 @@ def do_generate_models(data):
 
 
 @get_or_error
+def do_get_models(module_name):
+    filenames = os.listdir(get_models_path(module_name))
+    models = filter(lambda filename: (not filename.startswith(module_name) and filename.endswith(".cpp")), filenames)
+    models = map(lambda model: model.split(".")[0], models)
+    return list(models)
+
+
+@get_or_error
+def do_get_modules():
+    filenames = os.listdir(MODULES_PATH)
+    modules = filter(lambda filename: filename.endswith(".so"), filenames)
+    modules = map(lambda filename: filename.split(".")[0], modules)
+    return list(modules)
+
+
+@get_or_error
 def do_get_params(data):
     init_predefined()
 
-    if NESTML_MAJOR_RELEASE >= 8:
+    if MAJOR_VERSION >= 8:
         model = ModelParser.parse_model(data["script"])
     else:
         element_type = data.get("element_type", "neuron")
@@ -215,7 +235,7 @@ def do_get_params(data):
             param = {}
 
             param["id"] = try_or_pass(lambda: declaration.variables[0].name)
-            param["label"] = try_or_pass(lambda: declaration.print_comment()[2:])
+            param["label"] = try_or_pass(lambda: declaration.print_comment().strip())
 
             expression = declaration.expression
             value = 1
