@@ -22,8 +22,8 @@ NESTML_MAJOR_RELEASE = int(pynestml.__version__.split(".")[0])
 HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
 PORT = os.environ.get("NESTML_SERVER_PORT", "52426")
 
-MODELS_PATH = os.environ.get("NESTML_MODELS_PATH", "/tmp/nestml_models")
-MODULES_PATH = os.environ.get("NESTML_TARGETS_PATH", "/tmp/nestmlmodules")
+MODELS_PATH = os.environ.get("NESTML_MODELS_PATH", "/tmp/nestmlmodels")
+MODULES_PATH = os.environ.get("NESTML_MODULES_PATH", "/tmp/nestmlmodules")
 for path in [MODELS_PATH, MODULES_PATH]:
     os.makedirs(path, exist_ok=True)
 
@@ -67,7 +67,7 @@ def get_models():
     else:
         module = "nestmlmodule"
 
-    filenames = os.listdir(os.path.join(TARGETS_PATH, module))
+    filenames = os.listdir(os.path.join(MODULES_PATH, module))
     models = filter(lambda filename: (not filename.startswith(module) and filename.endswith(".cpp")), filenames)
     models = map(lambda model: model.split(".")[0], models)
     return jsonify(list(models))
@@ -75,8 +75,9 @@ def get_models():
 
 @app.route("/modules", methods=["GET"])
 def get_modules():
-    filenames = os.listdir(TARGETS_PATH)
-    modules = filter(lambda filename: filename.endswith("module"), filenames)
+    filenames = os.listdir(MODULES_PATH)
+    modules = filter(lambda filename: filename.endswith(".so"), filenames)
+    modules = map(lambda filename: filename.split(".")[0], modules)
     return jsonify(list(modules))
 
 
