@@ -42,3 +42,9 @@ Define path for NESTML modules:
 ```
 export NESTML_MODULES_PATH=/tmp/nestmlmodules
 ```
+
+To find NESTML modules in NEST define LD_LIBRARY_PATH for NESTML modules:
+
+```
+export LD_LIBRARY_PATH=$NESTML_MODULES_PATH:$LD_LIBRARY_PATH
+```

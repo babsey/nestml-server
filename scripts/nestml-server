@@ -22,7 +22,7 @@ usage() {
   echo "  -d                 daemonize the server process"
   echo "  -h <HOST>          use hostname/IP address <HOST> for the server [default: 127.0.0.1]"
   echo "  -o                 print NEST outputs to the console"
-  echo "  -p <PORT>          use port <PORT> for opening the socket [default: 52425]"
+  echo "  -p <PORT>          use port <PORT> for opening the socket [default: 52426]"
 }
 
 log() {
