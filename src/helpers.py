@@ -72,6 +72,7 @@ def do_generate_models(data):
 
     models = data.get("models", [])
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
+    init_predefined()
 
     if len(models) > 0:
         module_path = init_module_path(module_name)
@@ -81,6 +82,9 @@ def do_generate_models(data):
             model_name = model["name"]
             model_script = model["script"]
             status["INITIALIZED"].append(model_name)
+
+            model_parsed = ModelParser.parse_model(model_script)
+            assert model_parsed.name == model["name"]
 
             filename = os.path.join(module_path, models_dirname, model_name)
             with open(filename + ".nestml", "w") as f:
