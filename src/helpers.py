@@ -32,10 +32,10 @@ models_dirname = "models"
 module_dirname = "module"
 
 
-def clean_param(param):
-    keys = [k for k, v in param.items() if v == None]
+def clean_dict(d):
+    keys = [k for k, v in d.items() if v == None]
     for key in keys:
-        del param[key]
+        del d[key]
 
 
 def clear_dir(path):
@@ -169,16 +169,9 @@ def do_get_modules():
 
 
 @get_or_error
-def do_get_params(data):
-    init_predefined()
-
-    if MAJOR_VERSION >= 8:
-        model = ModelParser.parse_model(data["script"])
-    else:
-        element_type = data.get("element_type", "neuron")
-        model = getattr(ModelParser, "parse_" + element_type)(data["script"])
-
+def do_get_params(model):
     params = []
+
     if model:
         declarations = model.get_parameters_blocks()[0].declarations
         for declaration in declarations:
@@ -199,12 +192,60 @@ def do_get_params(data):
             if expression.has_unit():
                 param["unit"] = try_or_pass(lambda: expression.get_units()[0].name)
 
-            clean_param(param)
+            clean_dict(param)
             params.append(param)
 
-    return {"params": params}
+    return params
+
+
+@get_or_error
+def do_get_states(model):
+    states = []
+
+    if model:
+        declarations = model.get_state_blocks()[0].declarations
+        for declaration in declarations:
+            state = {}
+
+            state["id"] = try_or_pass(lambda: declaration.variables[0].name)
+            state["label"] = try_or_pass(lambda: declaration.print_comment().strip())
+
+            data_type = declaration.data_type.__str__()
+            expression = declaration.expression
+
+            if data_type == "boolean":
+                state["value"] = bool(expression.__str__())
+            else:
+                value = 1
+                if expression.__str__().startswith("-"):
+                    expression = expression.expression
+                    value = -1
+
+                state["value"] = value * try_or_pass(lambda: expression.numeric_literal)
+
+                if expression.has_unit():
+                    state["unit"] = try_or_pass(lambda: expression.get_units()[0].name)
+
+            # print(state)
+            clean_dict(state)
+            states.append(state)
+
+    return states
 
 
 @get_or_error
 def do_get_versions():
     return {"nest": nest.__version__, "nestml": pynestml.__version__}
+
+
+@get_or_error
+def do_parse_model(data):
+    init_predefined()
+
+    if MAJOR_VERSION >= 8:
+        model = ModelParser.parse_model(data["script"])
+    else:
+        element_type = data.get("element_type", "neuron")
+        model = getattr(ModelParser, "parse_" + element_type)(data["script"])
+
+    return model

@@ -13,7 +13,9 @@ from .helpers import (
     do_get_models,
     do_get_modules,
     do_get_params,
+    do_get_states,
     do_get_versions,
+    do_parse_model,
 )
 
 HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
@@ -49,11 +51,13 @@ def generate_json():
     return jsonify(response)
 
 
-@app.route("/getParams", methods=["POST"])
-def get_params():
+@app.route("/getSpecs", methods=["POST"])
+def get_states():
     data = request.get_json()
-    response = do_get_params(data)
-    return jsonify(response)
+    model = do_parse_model(data)
+    states = do_get_states(model)
+    params = do_get_params(model)
+    return jsonify({"states": states, "params": params})
 
 
 @app.route("/models", methods=["GET"])

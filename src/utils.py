@@ -21,9 +21,10 @@ def get_or_error(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            for line in traceback.format_exception(*sys.exc_info()):
-                print(line, flush=True)
-            abort(Response(str(e), EXCEPTION_ERROR_STATUS))
+            if len(str(e)) == 0:
+                e = traceback.format_exception(*sys.exc_info())[-1]
+            print(e)
+            abort(EXCEPTION_ERROR_STATUS, str(e))
 
     return func_wrapper
 
