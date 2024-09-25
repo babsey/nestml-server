@@ -5,7 +5,6 @@ import shutil
 import sys
 
 from werkzeug.exceptions import abort
-from werkzeug.wrappers import Response
 import traceback
 
 __all__ = [
@@ -40,7 +39,7 @@ def clear_dir(path):
 
 
 def get_module_path(module_name):
-    return os.path.join(module_name)
+    return os.path.join(MODULES_PATH, module_name)
 
 
 def get_or_error(func):

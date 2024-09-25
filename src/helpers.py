@@ -12,7 +12,6 @@ from .generators import get_json_from_existed_neuron
 from .utils import (
     MODULES_PATH,
     clean_dict,
-    get_module_path,
     get_or_error,
     init_module_path,
     models_dirname,
