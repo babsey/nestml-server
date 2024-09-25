@@ -1,3 +1,3 @@
-__version__ = "1.0b5"
+__version__ = "1.0b6"
 
 from .main import app
