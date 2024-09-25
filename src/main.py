@@ -7,15 +7,17 @@ from flask_cors import CORS
 
 from .helpers import (
     do_generate_models,
-    do_get_installed,
     do_get_json,
-    do_get_model_script,
-    do_get_models,
-    do_get_modules,
     do_get_params,
     do_get_states,
     do_get_versions,
     do_parse_model,
+)
+from .utils import (
+    do_get_installed,
+    do_get_model_script,
+    do_get_models,
+    do_get_modules,
 )
 
 HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
@@ -55,9 +57,14 @@ def generate_json():
 def get_states():
     data = request.get_json()
     model = do_parse_model(data)
-    states = do_get_states(model)
     params = do_get_params(model)
-    return jsonify({"states": states, "params": params})
+
+    try:
+        states = do_get_states(model)
+    except:
+        states = []
+
+    return jsonify({"params": params, "states": states})
 
 
 @app.route("/models", methods=["GET"])

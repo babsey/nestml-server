@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import shutil
 
 import nest
 import pynestml
@@ -10,10 +9,16 @@ from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_t
 from pynestml.utils.model_parser import ModelParser
 
 from .generators import get_json_from_existed_neuron
-from .utils import get_or_error, try_or_pass
-
-MODULES_PATH = os.environ.get("NESTML_MODULES_PATH", "/tmp/nestmlmodules")
-os.makedirs(MODULES_PATH, exist_ok=True)
+from .utils import (
+    MODULES_PATH,
+    clean_dict,
+    get_module_path,
+    get_or_error,
+    init_module_path,
+    models_dirname,
+    module_dirname,
+    try_or_pass,
+)
 
 MAJOR_VERSION = int(pynestml.__version__.split(".")[0])
 
@@ -27,40 +32,6 @@ __all__ = [
     "do_get_params",
     "do_get_versions",
 ]
-
-models_dirname = "models"
-module_dirname = "module"
-
-
-def clean_dict(d):
-    keys = [k for k, v in d.items() if v == None]
-    for key in keys:
-        del d[key]
-
-
-def clear_dir(path):
-    for filename in os.listdir(path):
-        file_path = os.path.join(path, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print("Failed to delete %s. Reason: %s" % (file_path, e))
-
-
-def get_module_path(module_name):
-    return os.path.join(MODULES_PATH, module_name)
-
-
-def init_module_path(module_name):
-    module_path = get_module_path(module_name)
-    for dirname in [models_dirname, module_dirname]:
-        dir_path = os.path.join(module_path, dirname)
-        os.makedirs(dir_path, exist_ok=True)
-        clear_dir(dir_path)
-    return module_path
 
 
 @get_or_error
@@ -130,42 +101,10 @@ def do_generate_models(data):
 
 
 @get_or_error
-def do_get_installed(module_name):
-    filenames = os.listdir(os.path.join(get_module_path(module_name), module_dirname))
-    models = filter(lambda filename: (not filename.startswith(module_name) and filename.endswith(".cpp")), filenames)
-    models = map(lambda model: model.split(".")[0], models)
-    return list(models)
-
-
-@get_or_error
 def do_get_json(data):
     model_name = data["model_name"]
     data_json = get_json_from_existed_neuron(model_name)
     return data_json
-
-
-@get_or_error
-def do_get_models(module_name):
-    filenames = os.listdir(os.path.join(get_module_path(module_name), models_dirname))
-    models = filter(lambda filename: filename.endswith(".nestml"), filenames)
-    models = map(lambda model: model.split(".")[0], models)
-    return list(models)
-
-
-@get_or_error
-def do_get_model_script(module_name, model_name):
-    filename = os.path.join(get_module_path(module_name), models_dirname, model_name)
-    with open(filename + ".nestml", "r") as f:
-        script = f.read()
-    return script
-
-
-@get_or_error
-def do_get_modules():
-    filenames = os.listdir(MODULES_PATH)
-    modules = filter(lambda filename: filename.endswith(".so"), filenames)
-    modules = map(lambda filename: filename.split(".")[0], modules)
-    return list(modules)
 
 
 @get_or_error
