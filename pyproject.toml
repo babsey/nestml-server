@@ -27,13 +27,7 @@ classifiers = [
   # Specify the Python versions you support here.
   "Programming Language :: Python :: 3",
 ]
-dependencies = [
-  "flask",
-  "flask-cors",
-  "gunicorn",
-  "nestml>=7.0",
-]
-dynamic = ["version"]
+dynamic = ["dependencies", "version"]
 
 [project.urls]
 repository = "https://github.com/babsey/nestml-server"
@@ -44,4 +38,5 @@ package-dir = {"nestml_server" = "src"}
 script-files = ["scripts/nestml-server"]
 
 [tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 version = {attr = "src.__version__"}
