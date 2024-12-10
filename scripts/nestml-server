@@ -43,18 +43,10 @@ set-gunicorn_opts() {
   # Set opts for gunicorn.
   GUNICORN_OPTS="--bind ${HOST}:${PORT}"
   GUNICORN_OPTS="${GUNICORN_OPTS} --log-file ${LOGFILE}"
-  if [ "${DAEMON}" -eq 1 ]; then
-    GUNICORN_OPTS="${GUNICORN_OPTS} --daemon"
-  fi
-  if [ "${STDOUT}" -eq 0 ]; then
-    GUNICORN_OPTS="${GUNICORN_OPTS} --capture-output"
-  fi
-  if [ "${WORKERS}" -gt 1 ]; then
-    GUNICORN_OPTS="${GUNICORN_OPTS} --workers ${WORKERS}"
-  fi
-  if [ "${TIMEOUT}" -ne 30 ]; then
-    GUNICORN_OPTS="${GUNICORN_OPTS} --timeout ${TIMEOUT}"
-  fi
+  [[ "${DAEMON}" -eq 1 ]] && GUNICORN_OPTS="${GUNICORN_OPTS} --daemon"
+  [[ "${STDOUT}" -eq 0 ]] && GUNICORN_OPTS="${GUNICORN_OPTS} --capture-output"
+  [[ "${TIMEOUT}" -ne 30 ]] && GUNICORN_OPTS="${GUNICORN_OPTS} --timeout ${TIMEOUT}"
+  [[ "${WORKERS}" -gt 1 ]] && GUNICORN_OPTS="${GUNICORN_OPTS} --workers ${WORKERS}"
 }
 
 start() {
@@ -65,20 +57,20 @@ start() {
     echo "NESTML Server is now running at http://${HOST}:${PORT}."
     if [ "${DAEMON}" -eq 0 ]; then
       echo "Use CTRL + C to stop this service."
-      if [ "${STDOUT}" -eq 1 ]; then
-        echo "-----------------------------------------------------"
-      fi
+      [[ "${STDOUT}" -eq 1 ]] && echo "-------------------------------------------------------"
     fi
     set-gunicorn_opts
-    exec gunicorn nestml_server:app ${GUNICORN_OPTS}
+    # shellcheck disable=SC2086
+    exec gunicorn nestml_server:app $GUNICORN_OPTS
   fi
 }
 
 status() {
-  # List all processes of NESTML Server.
-  PS_AUX="$(ps aux | grep "[g]unicorn nestml_server.app")"
-  printf "USER\t\t\tPID\t\tHTTP-SOCKET\n"
-  echo "${PS_AUX}" | head -n 1 | awk '{ for(i=1;i<=NF;i++) {if ( i == 1 || i == 2 || i == 15 ) printf $i"\t\t"}; printf "\n" }'
+  # List all processes of NEST Server.
+  PS_AUX="$(pgrep -af "gunicorn nestml_server.app")"
+  printf "PID\t\tHTTP-SOCKET\t\tLOGFILE\n"
+  echo "${PS_AUX}" | head -n 1 | awk \
+    '{ for(i=1;i<=NF;i++) {if ( i == 1 || i == 6 || i == 8 ) printf $i"\t\t"}; printf "\n" }'
 }
 
 stop() {
@@ -101,6 +93,7 @@ while getopts "dh:op:t:w:" opt; do
         p) PORT=$OPTARG ;;
         t) TIMEOUT=$OPTARG ;;
         w) WORKERS=$OPTARG ;;
+        *) echo "Invalid option"
     esac
 done
 
