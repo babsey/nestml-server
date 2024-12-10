@@ -66,7 +66,7 @@ start() {
 }
 
 status() {
-  # List all processes of NEST Server.
+  # List all processes of NESTML Server.
   PS_AUX="$(pgrep -af "gunicorn nestml_server.app")"
   printf "PID\t\tHTTP-SOCKET\t\tLOGFILE\n"
   echo "${PS_AUX}" | head -n 1 | awk \
