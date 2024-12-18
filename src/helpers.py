@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# helpers.py
 
 import os
 
@@ -6,20 +7,20 @@ import nest
 import pynestml
 
 from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_target
-from pynestml.utils.model_parser import ModelParser
+# from pynestml.utils.logger import Logger, LoggingLevel
 
+from .exceptions import call_or_error
 from .generators import get_json_from_existed_neuron
+from .serialize import do_parse_model
 from .utils import (
     MODULES_PATH,
     clean_dict,
-    get_or_error,
+    get_module_path,
     init_module_path,
     models_dirname,
     module_dirname,
     try_or_pass,
 )
-
-MAJOR_VERSION = int(pynestml.__version__.split(".")[0])
 
 __all__ = [
     "do_generate_models",
@@ -29,16 +30,19 @@ __all__ = [
     "do_get_models",
     "do_get_modules",
     "do_get_params",
+    "do_get_states",
     "do_get_versions",
 ]
 
-
-@get_or_error
+@call_or_error
 def do_generate_models(data):
     """Generate nestml models."""
     module_name = data.get("module_name", "nestmlmodule")
     if type(module_name) == list:
         module_name = module_name[0]
+
+    # Logger.init_logger(LoggingLevel.ERROR)
+    # log = Logger.get_log()
 
     models = data.get("models", [])
     status = {"INITIALIZED": [], "WRITTEN": [], "BUILT": [], "INSTALLED": []}
@@ -47,13 +51,13 @@ def do_generate_models(data):
     if len(models) > 0:
         module_path = init_module_path(module_name)
 
-        # Write nestml models in files.
+        # Write NESTML models in files.
         for model in models:
             model_name = model["name"]
             model_script = model["script"]
             status["INITIALIZED"].append(model_name)
 
-            model_parsed = ModelParser.parse_model(model_script)
+            model_parsed = do_parse_model(model_script)
             assert model_parsed.name == model["name"]
 
             filename = os.path.join(module_path, models_dirname, model_name)
@@ -62,7 +66,7 @@ def do_generate_models(data):
 
         # print(status["INITIALIZED"])
 
-        # Check if models are built.
+        # Check if models are written in nestml files.
         for file in os.listdir(os.path.join(module_path, models_dirname)):
             if file.endswith(".nestml"):
                 model_name, _ = file.split(".")
@@ -70,12 +74,14 @@ def do_generate_models(data):
 
         # print(status["WRITTEN"])
 
-        # Generate nest model components in a nestml module.
+        # Generate NEST model components in a NESTML module.
+        print('Generate model:', model['name'])
         generate_nest_target(
             input_path=os.path.join(module_path, models_dirname),
             install_path=MODULES_PATH,
             module_name=module_name,
             target_path=os.path.join(module_path, module_dirname),
+            logging_level='DEBUG',
         )
 
         # Check if models are generated.
@@ -99,14 +105,46 @@ def do_generate_models(data):
     return {"status": status}
 
 
-@get_or_error
+@call_or_error
+def do_get_installed(module_name):
+    filenames = os.listdir(os.path.join(get_module_path(module_name), module_dirname))
+    models = filter(lambda filename: (not filename.startswith(module_name) and filename.endswith(".cpp")), filenames)
+    models = map(lambda model: model.split(".")[0], models)
+    return list(models)
+
+
+@call_or_error
 def do_get_json(data):
     model_name = data["model_name"]
     data_json = get_json_from_existed_neuron(model_name)
     return data_json
 
 
-@get_or_error
+@call_or_error
+def do_get_model_script(module_name, model_name):
+    filename = os.path.join(get_module_path(module_name), models_dirname, model_name)
+    with open(filename + ".nestml", "r") as f:
+        script = f.read()
+    return script
+
+
+@call_or_error
+def do_get_models(module_name):
+    filenames = os.listdir(os.path.join(get_module_path(module_name), models_dirname))
+    models = filter(lambda filename: filename.endswith(".nestml"), filenames)
+    models = map(lambda model: model.split(".")[0], models)
+    return list(models)
+
+
+@call_or_error
+def do_get_modules():
+    filenames = os.listdir(MODULES_PATH)
+    modules = filter(lambda filename: filename.endswith(".so"), filenames)
+    modules = map(lambda filename: filename.split(".")[0], modules)
+    return list(modules)
+
+
+@call_or_error
 def do_get_params(model):
     params = []
 
@@ -136,7 +174,7 @@ def do_get_params(model):
     return params
 
 
-@get_or_error
+@call_or_error
 def do_get_states(model):
     states = []
 
@@ -171,19 +209,6 @@ def do_get_states(model):
     return states
 
 
-@get_or_error
+@call_or_error
 def do_get_versions():
     return {"nest": nest.__version__, "nestml": pynestml.__version__}
-
-
-@get_or_error
-def do_parse_model(data):
-    init_predefined()
-
-    if MAJOR_VERSION >= 8:
-        model = ModelParser.parse_model(data["script"])
-    else:
-        element_type = data.get("element_type", "neuron")
-        model = getattr(ModelParser, "parse_" + element_type)(data["script"])
-
-    return model

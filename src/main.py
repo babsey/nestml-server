@@ -1,24 +1,24 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# main.py
 
 import os
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from .exceptions import ErrorHandler
 from .helpers import (
     do_generate_models,
-    do_get_json,
-    do_get_params,
-    do_get_states,
-    do_get_versions,
-    do_parse_model,
-)
-from .utils import (
     do_get_installed,
+    do_get_json,
     do_get_model_script,
     do_get_models,
     do_get_modules,
+    do_get_params,
+    do_get_states,
+    do_get_versions,
 )
+from .serialize import do_parse_model
 
 HOST = os.environ.get("NESTML_SERVER_HOST", "127.0.0.1")
 PORT = os.environ.get("NESTML_SERVER_PORT", "52426")
@@ -27,6 +27,10 @@ __all__ = ["app"]
 
 app = Flask(__name__)
 CORS(app)
+
+@app.errorhandler(ErrorHandler)
+def error_handler(e):
+    return jsonify(e.to_dict()), e.status_code
 
 # ----------------------
 # Routes for the server
