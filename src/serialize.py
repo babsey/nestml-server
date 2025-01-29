@@ -10,8 +10,9 @@ from .exceptions import call_or_error
 
 MAJOR_VERSION = int(pynestml.__version__.split(".")[0])
 
+
 @call_or_error
-def do_parse_model(model_script: str, element_type: str = 'neuron'):
+def do_parse_model(model_script: str, element_type: str = "neuron"):
     init_predefined()
 
     if MAJOR_VERSION >= 8:

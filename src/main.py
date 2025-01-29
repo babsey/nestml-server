@@ -28,9 +28,11 @@ __all__ = ["app"]
 app = Flask(__name__)
 CORS(app)
 
+
 @app.errorhandler(ErrorHandler)
 def error_handler(e):
     return jsonify(e.to_dict()), e.status_code
+
 
 # ----------------------
 # Routes for the server
@@ -60,7 +62,7 @@ def generate_json():
 @app.route("/getSpecs", methods=["POST"])
 def get_states():
     data = request.get_json()
-    model = do_parse_model(data)
+    model = do_parse_model(data["script"], data.get("element_type", "neuron"))
     params = do_get_params(model)
 
     try:
