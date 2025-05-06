@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # serialize.py
 
-import pynestml
+import pynestml # noqa
 
-from pynestml.frontend.pynestml_frontend import init_predefined
-from pynestml.utils.model_parser import ModelParser
+from pynestml.frontend.pynestml_frontend import init_predefined # noqa
+from pynestml.utils.model_parser import ModelParser # noqa
 
 from .exceptions import call_or_error
 

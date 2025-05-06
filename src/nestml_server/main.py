@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # main.py
 
-import os
+import os # noqa
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import Flask, jsonify, request # noqa
+from flask_cors import CORS # noqa
 
 from .exceptions import ErrorHandler
 from .helpers import (

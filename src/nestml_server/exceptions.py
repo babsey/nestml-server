@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # exceptions.py
 
-import sys
-import traceback
+import sys # noqa
+import traceback # noqa
 
 # from pynestml.utils.logger import Logger
 

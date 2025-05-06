@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # helpers.py
 
-import os
+import os # noqa
 
-import nest
-import pynestml
+import nest # noqa
+import pynestml # noqa
 
-from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_target
+from pynestml.frontend.pynestml_frontend import init_predefined, generate_nest_target # noqa
 # from pynestml.utils.logger import Logger, LoggingLevel
 
-from .exceptions import call_or_error
+from .exceptions import call_or_error 
 from .generators import get_json_from_existed_neuron
 from .serialize import do_parse_model
 from .utils import (

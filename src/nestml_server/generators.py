@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # generators.py
 
-import os
-import pynestml
-import json
+import os # noqa
+import pynestml # noqa
+import json # noqa
 
-from pynestml.codegeneration.nest_desktop_code_generator import NESTDesktopCodeGenerator
-from pynestml.frontend.pynestml_frontend import init_predefined
-from pynestml.utils.model_parser import ModelParser
-from pynestml.visitors.ast_symbol_table_visitor import ASTSymbolTableVisitor
+from pynestml.codegeneration.nest_desktop_code_generator import NESTDesktopCodeGenerator # noqa
+from pynestml.frontend.pynestml_frontend import init_predefined # noqa
+from pynestml.utils.model_parser import ModelParser # noqa
+from pynestml.visitors.ast_symbol_table_visitor import ASTSymbolTableVisitor # noqa
 
 
 NESTML_ROOT = os.path.dirname(os.path.dirname(pynestml.__file__))

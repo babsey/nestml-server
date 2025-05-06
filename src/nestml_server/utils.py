@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # utils.py
 
-import os
-import shutil
+import os # noqa
+import shutil # noqa
 
 
 __all__ = [
