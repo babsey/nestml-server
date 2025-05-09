@@ -52,5 +52,3 @@ def try_or_pass(value):
         return value()
     except:
         pass
-
-
