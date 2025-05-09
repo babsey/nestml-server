@@ -1,4 +1,7 @@
-from importlib import metadata as _metadata # noqa
+from importlib import metadata  # noqa
 
-__version__ = _metadata.version("nestml-server")
-del _metadata
+try:
+    __version__ = metadata.version("nestml-server")
+    del metadata
+except:
+    pass
