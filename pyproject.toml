@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nestml-server"
-version = "1.0b9"
+version = "1.0"
 description = "A server instance for NESTML"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -16,7 +16,7 @@ authors = [
 maintainers = [
   {name = "Sebastian Spreizer", email = "spreizer@web.de"},
 ]
-keywords = ["spiking neuronal networks", "simulation", "NEST", "model generation", custom model"]
+keywords = ["spiking neuronal networks", "simulation", "NEST", "model generation", "custom model"]
 classifiers = [
   # How mature is this project? Common values are
   #   3 - Alpha
